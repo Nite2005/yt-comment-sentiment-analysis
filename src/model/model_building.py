@@ -73,7 +73,7 @@ def apply_tfidf(train_data: pd.DataFrame, max_features: int, ngram_range: tuple)
 
         logger.debug(f"TF-IDF transformation complete. Train shape: {X_train_tfidf.shape}")
 
-        # Save the vectorizer in the root directory
+        # Save the vectorizer    in the root directory
         with open(os.path.join(get_root_directory(), 'tfidf_vectorizer.pkl'), 'wb') as f:
             pickle.dump(vectorizer, f)
 
