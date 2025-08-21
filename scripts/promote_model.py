@@ -8,10 +8,10 @@ def promote_model():
     client = MlflowClient()
     model_name = "yt_chrome_plugin_model"
 
-    # Get the version by alias "staging"
+    # Get the version by alias "Staging"
     staging_version = client.get_model_version_by_alias(model_name, "Staging")
     if not staging_version:
-        raise ValueError(f"No model found with alias 'staging' for {model_name}")
+        raise ValueError(f"No model found with alias 'Staging' for {model_name}")
     staging_version_number = staging_version.version
 
     # Archive current production version (if alias exists)
@@ -27,17 +27,17 @@ def promote_model():
     except Exception:
         print("⚠️ No existing Production alias found, skipping archive.")
 
-    # Promote staging → production
+    # Promote staging → production (without alias param now)
     client.transition_model_version_stage(
         name=model_name,
         version=staging_version_number,
-        alias="Production"
+        stage="Production"
     )
 
-    # Update alias for production
+    # ✅ Update alias for production (this is the new way)
     client.set_registered_model_alias(model_name, "Production", staging_version_number)
 
-    print(f"✅ Model version {staging_version_number} promoted from @staging → @production")
+    print(f"✅ Model version {staging_version_number} promoted from @Staging → @Production")
 
 if __name__ == "__main__":
     promote_model()
