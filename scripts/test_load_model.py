@@ -5,13 +5,13 @@ from mlflow.tracking import MlflowClient
 # Set your remote tracking URI
 mlflow.set_tracking_uri("http://ec2-3-110-216-184.ap-south-1.compute.amazonaws.com:5000/")
 
-@pytest.mark.parametrize("model_name, stage", [
+@pytest.mark.parametrize("model_name, alias", [
     ("yt_chrome_plugin_model", "staging"),])
-def test_load_latest_staging_model(model_name, stage):
+def test_load_latest_staging_model(model_name, alias):
     client = MlflowClient()
     
     # Get the latest version in the specified stage
-    latest_version_info = client.get_latest_versions(model_name, stages=[stage])
+    latest_version_info = client.get_latest_versions(model_name, alias=[alias])
     latest_version = latest_version_info[0].version if latest_version_info else None
     
     assert latest_version is not None, f"No model found in the '{stage}' stage for '{model_name}'"
