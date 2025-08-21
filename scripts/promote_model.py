@@ -9,14 +9,14 @@ def promote_model():
     model_name = "yt_chrome_plugin_model"
 
     # Get the version by alias "staging"
-    staging_version = client.get_model_version_by_alias(model_name, "staging")
+    staging_version = client.get_model_version_by_alias(model_name, "Staging")
     if not staging_version:
         raise ValueError(f"No model found with alias 'staging' for {model_name}")
     staging_version_number = staging_version.version
 
     # Archive current production version (if alias exists)
     try:
-        prod_version = client.get_model_version_by_alias(model_name, "production")
+        prod_version = client.get_model_version_by_alias(model_name, "Production")
         if prod_version:
             client.transition_model_version_stage(
                 name=model_name,
@@ -35,7 +35,7 @@ def promote_model():
     )
 
     # Update alias for production
-    client.set_registered_model_alias(model_name, "production", staging_version_number)
+    client.set_registered_model_alias(model_name, "Production", staging_version_number)
 
     print(f"✅ Model version {staging_version_number} promoted from @staging → @production")
 
