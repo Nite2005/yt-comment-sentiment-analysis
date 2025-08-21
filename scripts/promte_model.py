@@ -8,28 +8,36 @@ def promote_model():
     client = MlflowClient()
     model_name = "yt_chrome_plugin_model"
 
-    # Get the latest version in Staging
-    latest_staging = client.get_latest_versions(model_name, stages=["Staging"])
-    assert latest_staging, f"No model found in 'Staging' for {model_name}"
-    latest_version_staging = latest_staging[0].version
+    # Get the version by alias "staging"
+    staging_version = client.get_model_version_by_alias(model_name, "staging")
+    if not staging_version:
+        raise ValueError(f"No model found with alias 'staging' for {model_name}")
+    staging_version_number = staging_version.version
 
-    # Archive current Production models
-    prod_versions = client.get_latest_versions(model_name, stages=["Production"])
-    for version in prod_versions:
-        client.transition_model_version_stage(
-            name=model_name,
-            version=version.version,
-            stage="Archived"
-        )
-        print(f"Archived model version {version.version}")
+    # Archive current production version (if alias exists)
+    try:
+        prod_version = client.get_model_version_by_alias(model_name, "production")
+        if prod_version:
+            client.transition_model_version_stage(
+                name=model_name,
+                version=prod_version.version,
+                stage="Archived"
+            )
+            print(f"Archived Production model version {prod_version.version}")
+    except Exception:
+        print("⚠️ No existing Production alias found, skipping archive.")
 
-    # Promote the new model to Production
+    # Promote staging → production
     client.transition_model_version_stage(
         name=model_name,
-        version=latest_version_staging,
-        stage="Production"
+        version=staging_version_number,
+        alias="Production"
     )
-    print(f"✅ Model version {latest_version_staging} promoted to Production")
+
+    # Update alias for production
+    client.set_registered_model_alias(model_name, "production", staging_version_number)
+
+    print(f"✅ Model version {staging_version_number} promoted from @staging → @production")
 
 if __name__ == "__main__":
     promote_model()
