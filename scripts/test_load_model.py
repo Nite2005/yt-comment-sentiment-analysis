@@ -6,15 +6,17 @@ from mlflow.tracking import MlflowClient
 mlflow.set_tracking_uri("http://ec2-3-110-216-184.ap-south-1.compute.amazonaws.com:5000/")
 
 @pytest.mark.parametrize("model_name, alias", [
-    ("yt_chrome_plugin_model", "staging"),])
+    ("yt_chrome_plugin_model", "Staging"),  # Make sure this matches your MLflow stage (Staging/Production/Archived)
+])
 def test_load_latest_staging_model(model_name, alias):
     client = MlflowClient()
     
     # Get the latest version in the specified stage
-    latest_version_info = client.get_latest_versions(model_name, alias=[alias])
-    latest_version = latest_version_info[0].version if latest_version_info else None
+    latest_version_info = client.get_latest_versions(model_name, stages=[alias])
     
-    assert latest_version is not None, f"No model found in the '{stage}' stage for '{model_name}'"
+    assert latest_version_info, f"No model found in the '{alias}' stage for '{model_name}'"
+    
+    latest_version = latest_version_info[0].version
 
     try:
         # Load the latest version of the model
@@ -23,7 +25,7 @@ def test_load_latest_staging_model(model_name, alias):
 
         # Ensure the model loads successfully
         assert model is not None, "Model failed to load"
-        print(f"Model '{model_name}' version {latest_version} loaded successfully from '{stage}' stage.")
+        print(f"✅ Model '{model_name}' version {latest_version} loaded successfully from '{alias}' stage.")
 
     except Exception as e:
-        pytest.fail(f"Model loading failed with error: {e}")
+        pytest.fail(f"❌ Model loading failed with error: {e}")

@@ -7,17 +7,17 @@ from mlflow.tracking import MlflowClient
 # Set your remote tracking URI
 mlflow.set_tracking_uri("http://ec2-3-110-216-184.ap-south-1.compute.amazonaws.com:5000/")
 
-@pytest.mark.parametrize("model_name, alias, vectorizer_path", [
-    ("yt_chrome_plugin_model", "staging", "tfidf_vectorizer.pkl"),  # Replace with your actual model name and vectorizer path
+@pytest.mark.parametrize("model_name, stage, vectorizer_path", [
+    ("yt_chrome_plugin_model", "Staging", "tfidf_vectorizer.pkl"),  # Adjust paths & stage as needed
 ])
 def test_model_with_vectorizer(model_name, stage, vectorizer_path):
     client = MlflowClient()
 
     # Get the latest version in the specified stage
-    latest_version_info = client.get_latest_versions(model_name, alias=[alias])
-    latest_version = latest_version_info[0].version if latest_version_info else None
+    latest_version_info = client.get_latest_versions(model_name, stages=[stage])
+    assert latest_version_info, f"No model found in the '{stage}' stage for '{model_name}'"
 
-    assert latest_version is not None, f"No model found in the '{stage}' stage for '{model_name}'"
+    latest_version = latest_version_info[0].version
 
     try:
         # Load the latest version of the model
@@ -31,7 +31,10 @@ def test_model_with_vectorizer(model_name, stage, vectorizer_path):
         # Create a dummy input for the model
         input_text = "hi how are you"
         input_data = vectorizer.transform([input_text])
-        input_df = pd.DataFrame(input_data.toarray(), columns=vectorizer.get_feature_names_out())  # <-- Use correct feature names
+        input_df = pd.DataFrame(
+            input_data.toarray(),
+            columns=vectorizer.get_feature_names_out()
+        )
 
         # Predict using the model
         prediction = model.predict(input_df)
@@ -39,10 +42,10 @@ def test_model_with_vectorizer(model_name, stage, vectorizer_path):
         # Verify the input shape matches the vectorizer's feature output
         assert input_df.shape[1] == len(vectorizer.get_feature_names_out()), "Input feature count mismatch"
 
-        # Verify the output shape (assuming binary classification with a single output)
+        # Verify output shape (predictions should match input rows)
         assert len(prediction) == input_df.shape[0], "Output row count mismatch"
 
-        print(f"Model '{model_name}' version {latest_version} successfully processed the dummy input.")
+        print(f"✅ Model '{model_name}' version {latest_version} successfully processed the dummy input from '{stage}' stage.")
 
     except Exception as e:
-        pytest.fail(f"Model test failed with error: {e}")
+        pytest.fail(f"❌ Model test failed with error: {e}")

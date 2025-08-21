@@ -1,32 +1,35 @@
-import os
 import mlflow
+from mlflow.tracking import MlflowClient
 
 def promote_model():
     # Set up AWS MLflow tracking URI
     mlflow.set_tracking_uri("http://ec2-3-110-216-184.ap-south-1.compute.amazonaws.com:5000/")
 
-    client = mlflow.MlflowClient()
-
+    client = MlflowClient()
     model_name = "yt_chrome_plugin_model"
-    # Get the latest version in staging
-    latest_version_staging = client.get_latest_versions(model_name, alias=["Staging"])[0].version
 
-    # Archive the current production model
-    prod_versions = client.get_latest_versions(model_name, alias=["Production"])
+    # Get the latest version in Staging
+    latest_staging = client.get_latest_versions(model_name, stages=["Staging"])
+    assert latest_staging, f"No model found in 'Staging' for {model_name}"
+    latest_version_staging = latest_staging[0].version
+
+    # Archive current Production models
+    prod_versions = client.get_latest_versions(model_name, stages=["Production"])
     for version in prod_versions:
         client.transition_model_version_stage(
             name=model_name,
             version=version.version,
-            alias="Archived"
+            stage="Archived"
         )
+        print(f"Archived model version {version.version}")
 
-    # Promote the new model to production
+    # Promote the new model to Production
     client.transition_model_version_stage(
         name=model_name,
         version=latest_version_staging,
-        alias="Production"
+        stage="Production"
     )
-    print(f"Model version {latest_version_staging} promoted to Production")
+    print(f"✅ Model version {latest_version_staging} promoted to Production")
 
 if __name__ == "__main__":
     promote_model()
