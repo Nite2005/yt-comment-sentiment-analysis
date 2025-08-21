@@ -6,26 +6,23 @@ from mlflow.tracking import MlflowClient
 mlflow.set_tracking_uri("http://ec2-3-110-216-184.ap-south-1.compute.amazonaws.com:5000/")
 
 @pytest.mark.parametrize("model_name, alias", [
-    ("yt_chrome_plugin_model", "Staging"),  # Make sure this matches your MLflow stage (Staging/Production/Archived)
+    ("yt_chrome_plugin_model", "staging"),  # use lowercase aliases by convention
 ])
-def test_load_latest_staging_model(model_name, alias):
+def test_load_model_by_alias(model_name, alias):
     client = MlflowClient()
-    
-    # Get the latest version in the specified stage
-    latest_version_info = client.get_latest_versions(model_name, stages=[alias])
-    
-    assert latest_version_info, f"No model found in the '{alias}' stage for '{model_name}'"
-    
-    latest_version = latest_version_info[0].version
+
+    # Get model version by alias
+    version_info = client.get_model_version_by_alias(model_name, alias)
+    assert version_info is not None, f"No model found with alias '{alias}' for '{model_name}'"
 
     try:
-        # Load the latest version of the model
-        model_uri = f"models:/{model_name}/{latest_version}"
+        # Load the model by alias
+        model_uri = f"models:/{model_name}@{alias}"
         model = mlflow.pyfunc.load_model(model_uri)
 
         # Ensure the model loads successfully
         assert model is not None, "Model failed to load"
-        print(f"✅ Model '{model_name}' version {latest_version} loaded successfully from '{alias}' stage.")
+        print(f"✅ Model '{model_name}' version {version_info.version} loaded successfully using alias '{alias}'.")
 
     except Exception as e:
         pytest.fail(f"❌ Model loading failed with error: {e}")
