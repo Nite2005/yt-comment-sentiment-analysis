@@ -9,7 +9,7 @@ from mlflow.tracking import MlflowClient
 mlflow.set_tracking_uri("http://ec2-3-110-216-184.ap-south-1.compute.amazonaws.com:5000/")
 
 @pytest.mark.parametrize("model_name, alias, holdout_data_path, vectorizer_path", [
-    ("yt_chrome_plugin_model", "staging", "data/interim/test_processed.csv", "tfidf_vectorizer.pkl"),  # Adjust paths
+    ("yt_chrome_plugin_model", "Staging", "data/interim/test_processed.csv", "tfidf_vectorizer.pkl"),  # Adjust paths
 ])
 def test_model_performance(model_name, alias, holdout_data_path, vectorizer_path):
     try:
